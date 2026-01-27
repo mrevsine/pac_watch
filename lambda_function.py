@@ -220,6 +220,9 @@ def process_independent_expenditure_df(df):
     # Early exit if df is null or empty
 	if df is None or df.shape[0] == 0:
 		return df
+	
+	# Create copy of the input df to avoid warnings
+	df = df.copy()
 
 	# List of most important columns to process
 	key_columns = [
@@ -320,27 +323,25 @@ def get_total_pac_to_candidate_in_cycle_amount(candidate_id, committee_id, cycle
 # Returns the tweet body as a string
 def get_tweet_body(row, query_total_contribution=False, char_limit=280):
   
-	# Extract relevant data from row
+		# Extract relevant data from row
 	pac = row["committee.name"]
 	amount = row["expenditure_amount"]
 	purpose = row["expenditure_description"]
-	# purpose_category = row["category_code_full"]
 	suppopp = row["support_oppose_indicator"]
 	firstname = row["candidate_first_name"]
 	lastname = row["candidate_last_name"]
 	party = row["candidate_party"]
 	district = row["candidate_office_district"]
 	state = row["candidate_office_state"]
-	date = row["expenditure_date"]
+	expenditure_date = row["expenditure_date"]
+	filing_date = row["filing_date"]
 	election = row["election_type"]
 
 	# Check for absolutely necessary info
-	if date is None or pac is None or amount is None \
+	if expenditure_date is None or pac is None or amount is None \
 		or firstname is None or lastname is None \
 		or suppopp is None or election is None:
 		return ""
-
-	### Process data
 
 	# Process PAC name
     # Fix anything that could be interpreted by twitter as a url
@@ -372,7 +373,8 @@ def get_tweet_body(row, query_total_contribution=False, char_limit=280):
 
 	# Process other fields
 	suppopp = "for" if suppopp == "S" else "against"
-	date = datetime.datetime.strptime(date, "%Y-%m-%d").strftime("%m/%d/%Y")
+	expenditure_date = datetime.datetime.strptime(expenditure_date, "%Y-%m-%d").strftime("%m/%d/%Y")
+	filing_date = datetime.datetime.strptime(filing_date, "%Y-%m-%d").strftime("%m/%d/%Y")
 	
 	# If purpose is given, add it to tweet
 	purpose_str = ""
@@ -385,7 +387,7 @@ def get_tweet_body(row, query_total_contribution=False, char_limit=280):
 	### Construct tweet body
 
 	# Main tweet
-	body = f'{date}: {pac} spends {amount_str}{purpose_str} {suppopp} ' + \
+	body = f'{pac} spends {amount_str}{purpose_str} {suppopp} ' + \
 			f'{firstname} {lastname} ({candidate_info_string}) {election}.'
 
 	# if tweet is too long, remove purpose note
@@ -413,10 +415,13 @@ def get_tweet_body(row, query_total_contribution=False, char_limit=280):
 				total_amount_str = f"${total_contribution:,.2f}"
 				if total_amount_str.endswith(".00"):
 					total_amount_str = total_amount_str[:-3]
-				additional_line = f' They have now spent {total_amount_str} ' + \
+				additional_line = f'\n\nThey have now spent {total_amount_str} ' + \
 					f'{suppopp} {lastname} this cycle.'
 				if len(body) + len(additional_line) <= char_limit:
 					body += additional_line
+					
+    # Add date at the bottom
+	body += f'\n\nDisbursed {expenditure_date}\nFiled {filing_date}'
 	
 	# Truncate tweet if it's over Twitter's character limit
 	# This should probably never happen
@@ -453,7 +458,8 @@ def send_tweet(message, client, n_tries=10, wait_time=1):
 
 ###=============================================================================
 # Function that executes the main procedure of the script
-def main(min_report_amt=100, verbose=True, tweet=True, between_tweets_time=15):
+def main(min_report_amt=100, report_total_contributions=True,
+		 verbose=True, tweet=False, between_tweets_time=15):
   
 	# Get start time for program execution
 	curr_datetime = datetime.datetime.now()
@@ -462,7 +468,7 @@ def main(min_report_amt=100, verbose=True, tweet=True, between_tweets_time=15):
 	
 	# Get twitter client for interactions with Twitter API
 	twitter_client = get_twitter_client()
-	
+
 	# Pull all latest expenditures in the past day
 	last_date = (curr_datetime - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
 	if verbose:
@@ -477,7 +483,7 @@ def main(min_report_amt=100, verbose=True, tweet=True, between_tweets_time=15):
 
     # Send a tweet for each latest expenditure
 	for _, row in latest_df.iterrows():
-		tweet_body = get_tweet_body(row, query_total_contribution=True)
+		tweet_body = get_tweet_body(row, query_total_contribution=report_total_contributions)
 		if verbose:
 			print(tweet_body)
 		if tweet:
