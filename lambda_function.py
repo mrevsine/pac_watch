@@ -500,7 +500,8 @@ def main(min_report_amt=100, report_total_contributions=True,
 # Lambda start point 
 
 def lambda_handler(event, context):
-	main(min_report_amt=100, verbose=True, tweet=True, between_tweets_time=15)
+	main(min_report_amt=100,  report_total_contributions=True, verbose=True, 
+	  tweet=True, between_tweets_time=15)
 	return {"statusCode": 200} 
 
 
