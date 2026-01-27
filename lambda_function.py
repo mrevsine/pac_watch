@@ -17,7 +17,6 @@ import json
 from json.decoder import JSONDecodeError
 import os
 import pandas as pd
-from pathlib import Path
 import tweepy
 from time import sleep
 
