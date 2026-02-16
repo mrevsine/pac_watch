@@ -17,6 +17,8 @@ import json
 from json.decoder import JSONDecodeError
 import os
 import pandas as pd
+from pathlib import Path
+import pytz
 import tweepy
 from time import sleep
 
@@ -46,7 +48,7 @@ def get_twitter_client():
 def get_check_errors(url, headers={}):
   
 	# Set up GET
-	http = httplib2.Http(".cache")
+	http = httplib2.Http()
 	headers['User-Agent'] = 'Mozilla/5.0'
   
 	# Attempt GET
@@ -347,6 +349,10 @@ def get_tweet_body(row, query_total_contribution=False, char_limit=280):
 	if "." in pac[:-1]:
 		pac = pac[:-1].replace(".", " dot ") + pac[-1]
 	pac = pac.title()
+	if pac.endswith(" Pac"):
+		pac = pac[:-4] + " PAC"
+	if pac.startswith("Pac "):
+		pac = "PAC " + pac[4:]
 
 	# Process contribution amount
 	amount_str = f"${amount:,.2f}"
@@ -458,10 +464,10 @@ def send_tweet(message, client, n_tries=10, wait_time=1):
 ###=============================================================================
 # Function that executes the main procedure of the script
 def main(min_report_amt=100, report_total_contributions=True,
-		 verbose=True, tweet=False, between_tweets_time=15):
+		 verbose=True, tweet=True, between_tweets_time=15):
   
 	# Get start time for program execution
-	curr_datetime = datetime.datetime.now()
+	curr_datetime = datetime.datetime.now(pytz.timezone("US/Eastern"))
 	if verbose:
 		print("Running at " + str(curr_datetime))
 	
@@ -500,17 +506,7 @@ def main(min_report_amt=100, report_total_contributions=True,
 
 def lambda_handler(event, context):
 	main(min_report_amt=100,  report_total_contributions=True, verbose=True, 
-	  tweet=True, between_tweets_time=15)
+	  tweet=True, between_tweets_time=5)
 	return {"statusCode": 200} 
 
-
-###=============================================================================
-# FOR TESTING - execution start point
-
-def __main__():
-	main()
-
-
-if __name__ == "__main__":
-	__main__()
 
