@@ -311,8 +311,8 @@ def get_total_pac_to_candidate_in_cycle_amount(candidate_id, committee_id, cycle
 ###=============================================================================
 # Function that constructs the text body of a tweet 
 # detailing a single campaign contribution
-#
 # Returns the tweet body as a string
+
 def get_tweet_body(row, query_total_contribution=False, char_limit=280):
   
 		# Extract relevant data from row
@@ -431,6 +431,7 @@ def get_tweet_body(row, query_total_contribution=False, char_limit=280):
 # Function that posts a tweet to @PAC_watch
 # On failure, sleeps for `wait_time` secs and tries again up to `n_tries` times
 # Returns tweet result object on success or None on failure
+
 def send_tweet(message, client, n_tries=10, wait_time=1):
   
 	def try_send_tweet(message, client):
@@ -454,6 +455,7 @@ def send_tweet(message, client, n_tries=10, wait_time=1):
 
 ###=============================================================================
 # Function that executes the main procedure of the script
+
 def main(min_report_amt=100, report_total_contributions=True,
 		 verbose=True, tweet=True, between_tweets_time=15):
   
