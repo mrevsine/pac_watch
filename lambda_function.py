@@ -311,15 +311,6 @@ def get_total_pac_to_candidate_in_cycle_amount(candidate_id, committee_id, cycle
 ###=============================================================================
 # Function that constructs the text body of a tweet 
 # detailing a single campaign contribution
-# 
-# Tweets are formatted as follows:
-# [PAC] spends $[amount] on [purpose] [for/against] 
-# [Candidate first and last name] ([Party]-[District]).
-# 
-# If the PAC has previously spend money on this candidate in the past 
-# `n_months` months, we report that too on a new line:
-# They have now spent $[cumulative amount] [for/against] 
-# [Candidate lastname] in the past `n_months` month(s).
 #
 # Returns the tweet body as a string
 def get_tweet_body(row, query_total_contribution=False, char_limit=280):
