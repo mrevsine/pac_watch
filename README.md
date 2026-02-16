@@ -1,4 +1,7 @@
 # Welcome to Pac Watch! (@PAC_watch)
+
+![Profile picture of Bill from Schoolhouse Rock](imgs/avatar.JPG)
+
 ## We are a twitter bot that posts the latest independent expenditures from PACs to American Congressional and Presidential candidates.
 
 ### Important Notes
