@@ -311,8 +311,17 @@ def get_total_pac_to_candidate_in_cycle_amount(candidate_id, committee_id, cycle
 ###=============================================================================
 # Function that constructs the text body of a tweet 
 # detailing a single campaign contribution
+# 
+# Tweets are formatted as follows:
+# [PAC] spends $[amount] on [purpose] [for/against] 
+# [Candidate first and last name] ([Party]-[District]).
+# 
+# If the PAC has previously spend money on this candidate in the past 
+# `n_months` months, we report that too on a new line:
+# They have now spent $[cumulative amount] [for/against] 
+# [Candidate lastname] in the past `n_months` month(s).
+#
 # Returns the tweet body as a string
-
 def get_tweet_body(row, query_total_contribution=False, char_limit=280):
   
 		# Extract relevant data from row
@@ -431,7 +440,6 @@ def get_tweet_body(row, query_total_contribution=False, char_limit=280):
 # Function that posts a tweet to @PAC_watch
 # On failure, sleeps for `wait_time` secs and tries again up to `n_tries` times
 # Returns tweet result object on success or None on failure
-
 def send_tweet(message, client, n_tries=10, wait_time=1):
   
 	def try_send_tweet(message, client):
@@ -444,9 +452,9 @@ def send_tweet(message, client, n_tries=10, wait_time=1):
 
 	tweet_result = try_send_tweet(message, client)
 	while tweet_result is None:
+		n_tries -= 1
 		if n_tries == 0:
 			break
-		n_tries -= 1
 		sleep(wait_time)
 		tweet_result = try_send_tweet(message, client)
 
@@ -455,9 +463,9 @@ def send_tweet(message, client, n_tries=10, wait_time=1):
 
 ###=============================================================================
 # Function that executes the main procedure of the script
-
 def main(min_report_amt=100, report_total_contributions=True,
-		 verbose=True, tweet=True, between_tweets_time=15):
+		 verbose=True, tweet=True, between_tweets_time=15,
+		 test_tweeter_only=False):
   
 	# Get start time for program execution
 	curr_datetime = datetime.datetime.now(pytz.timezone("US/Eastern"))
@@ -466,6 +474,10 @@ def main(min_report_amt=100, report_total_contributions=True,
 	
 	# Get twitter client for interactions with Twitter API
 	twitter_client = get_twitter_client()
+
+	if test_tweeter_only:
+		send_tweet("Test tweet at " + str(curr_datetime), twitter_client)
+		exit()
 
 	# Pull all latest expenditures in the past day
 	last_date = (curr_datetime - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
@@ -485,10 +497,10 @@ def main(min_report_amt=100, report_total_contributions=True,
 		if verbose:
 			print(tweet_body)
 		if tweet:
-			tweet_result = send_tweet(tweet_body, twitter_client)
+			tweet_result = send_tweet(tweet_body, twitter_client, n_tries=2)
 			if tweet_result is None:
 				if verbose:
-					print("failed to tweet")
+					print("WARNING: failed to tweet")
 			sleep(between_tweets_time)
 	
 	return 0
@@ -498,8 +510,8 @@ def main(min_report_amt=100, report_total_contributions=True,
 # Lambda start point 
 
 def lambda_handler(event, context):
-	main(min_report_amt=100,  report_total_contributions=True, verbose=True, 
-	  tweet=True, between_tweets_time=5)
+	main(min_report_amt=1000,  report_total_contributions=True, verbose=True, 
+	  tweet=True, between_tweets_time=5, test_tweeter_only=False)
 	return {"statusCode": 200} 
 
 
