@@ -362,7 +362,7 @@ def get_tweet_body(row, query_total_contribution=False, char_limit=280):
 	# Process candidate info
 	firstname = firstname.title()
 	lastname = lastname.title()
-	party = "D" if party == "DEM" else ("R" if party == "REP" else "")
+	party = "D" if party == "DEM" else ("R" if party == "REP" else "I")
 	if district is None or district == "" or district == "00":
 		district = ""
 	candidate_info_string = ""
